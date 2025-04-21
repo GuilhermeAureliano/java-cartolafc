@@ -7,9 +7,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/mercado")
 public class MercadoController {
 
     private final MercadoService mercadoService;
@@ -24,7 +26,7 @@ public class MercadoController {
             @ApiResponse(responseCode = "404", description = "Mercado não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno")
     })
-    @GetMapping("mercado/status")
+    @GetMapping("/status")
     public ResponseEntity<?> buscarInformacoesMercado() {
         try {
             return ResponseEntity.ok(mercadoService.buscarInformacoesMercado());
