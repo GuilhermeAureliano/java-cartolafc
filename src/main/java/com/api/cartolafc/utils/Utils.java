@@ -22,4 +22,17 @@ public class Utils {
         headers.set("User-Agent", "Mozilla/5.0");
         return new HttpEntity<>(headers);
     }
+
+    public static String limparUrlEscudo(String urlEscudo) {
+        if (urlEscudo == null || urlEscudo.isEmpty()) {
+            return urlEscudo;
+        }
+        
+        int indiceS3 = urlEscudo.indexOf("https://s3.glbimg.com/");
+        if (indiceS3 != -1) {
+            return urlEscudo.substring(indiceS3);
+        }
+        
+        return urlEscudo;
+    }
 }

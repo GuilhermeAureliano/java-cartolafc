@@ -37,11 +37,26 @@ public class TimesService {
         }
 
         String termoNormalizado = Utils.normalizarSlug(nome);
-        return times.stream()
+        TimeDTO timeEncontrado = times.stream()
                 .filter(time -> time.slug().equalsIgnoreCase(termoNormalizado)
                         || time.nome().equalsIgnoreCase(nome))
                 .findFirst()
                 .orElse(null);
+        
+        if (timeEncontrado == null) {
+            return null;
+        }
+        
+        // Limpa a URL do escudo removendo o prefixo do CDN
+        String urlEscudoLimpa = Utils.limparUrlEscudo(timeEncontrado.urlEscudoPng());
+        return new TimeDTO(
+                timeEncontrado.temporadaInicial(),
+                timeEncontrado.nomeCartola(),
+                timeEncontrado.nome(),
+                urlEscudoLimpa,
+                timeEncontrado.slug(),
+                timeEncontrado.timeId()
+        );
     }
 
     public TimePorIdDTO buscarTimePorId(String id) {
@@ -63,6 +78,30 @@ public class TimesService {
         TimePorIdDTO body = response.getBody();
         if (body == null) {
             throw new RuntimeException("Resposta da API está vazia.");
+        }
+
+        if (body.time() != null && body.time().urlEscudoPng() != null) {
+            String urlEscudoLimpa = Utils.limparUrlEscudo(body.time().urlEscudoPng());
+            TimeDTO timeLimpo = new TimeDTO(
+                    body.time().temporadaInicial(),
+                    body.time().nomeCartola(),
+                    body.time().nome(),
+                    urlEscudoLimpa,
+                    body.time().slug(),
+                    body.time().timeId()
+            );
+            return new TimePorIdDTO(
+                    timeLimpo,
+                    body.pontosCampeonato(),
+                    body.capitaoId(),
+                    body.reservaLuxoId(),
+                    body.pontos(),
+                    body.variacaoPatrimonio(),
+                    body.esquemaId(),
+                    body.rodadaAtual(),
+                    body.patrimonio(),
+                    body.valorTime()
+            );
         }
 
         return body;
