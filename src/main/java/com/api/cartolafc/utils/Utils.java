@@ -9,10 +9,10 @@ public class Utils {
 
     public static final String BASE_URL = "https://api.cartola.globo.com";
 
-    public static String normalizarSlug(String texto) {
-        String semAcento = Normalizer.normalize(texto, Normalizer.Form.NFD)
+    public static String normalizeSlug(String text) {
+        String withoutAccents = Normalizer.normalize(text, Normalizer.Form.NFD)
                 .replaceAll("[\\p{InCombiningDiacriticalMarks}]+", "");
-        return semAcento.toLowerCase()
+        return withoutAccents.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("(^-|-$)", "");
     }
@@ -23,16 +23,16 @@ public class Utils {
         return new HttpEntity<>(headers);
     }
 
-    public static String limparUrlEscudo(String urlEscudo) {
-        if (urlEscudo == null || urlEscudo.isEmpty()) {
-            return urlEscudo;
+    public static String cleanShieldUrl(String shieldUrl) {
+        if (shieldUrl == null || shieldUrl.isEmpty()) {
+            return shieldUrl;
         }
         
-        int indiceS3 = urlEscudo.indexOf("https://s3.glbimg.com/");
-        if (indiceS3 != -1) {
-            return urlEscudo.substring(indiceS3);
+        int s3Index = shieldUrl.indexOf("https://s3.glbimg.com/");
+        if (s3Index != -1) {
+            return shieldUrl.substring(s3Index);
         }
         
-        return urlEscudo;
+        return shieldUrl;
     }
 }
