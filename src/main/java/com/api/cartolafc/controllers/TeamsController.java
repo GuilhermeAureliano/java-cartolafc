@@ -1,8 +1,8 @@
 package com.api.cartolafc.controllers;
 
-import com.api.cartolafc.dtos.TimeDTO;
-import com.api.cartolafc.dtos.TimePorIdDTO;
-import com.api.cartolafc.services.TimesService;
+import com.api.cartolafc.dtos.TeamDTO;
+import com.api.cartolafc.dtos.TeamByIdDTO;
+import com.api.cartolafc.services.TeamsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,12 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-public class TimesController {
+public class TeamsController {
 
-    private final TimesService timesService;
+    private final TeamsService teamsService;
 
-    public TimesController(TimesService timesService) {
-        this.timesService = timesService;
+    public TeamsController(TeamsService teamsService) {
+        this.teamsService = teamsService;
     }
 
     @Operation(summary = "Buscar time por nome", description = "Busca informações de um time pelo nome.")
@@ -27,14 +27,14 @@ public class TimesController {
             @ApiResponse(responseCode = "500", description = "Erro interno")
     })
     @GetMapping("/times")
-    public ResponseEntity<?> buscarTimePorNome(@Parameter(description = "Nome do time (ex: Sportv)", example = "Sportv") @RequestParam("q") String nome) {
+    public ResponseEntity<?> findTeamByName(@Parameter(description = "Nome do time (ex: Sportv)", example = "Sportv") @RequestParam("q") String name) {
         try {
-            TimeDTO time = timesService.buscarTimePorNome(nome);
-            if (time == null) {
+            TeamDTO team = teamsService.findTeamByName(name);
+            if (team == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Time não encontrado para o nome: " + nome);
+                        .body("Time não encontrado para o nome: " + name);
             }
-            return ResponseEntity.ok(time);
+            return ResponseEntity.ok(team);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao consultar API do Cartola: " + e.getMessage());
@@ -48,16 +48,16 @@ public class TimesController {
             @ApiResponse(responseCode = "500", description = "Erro ao consultar a API do Cartola")
     })
     @GetMapping("/time/id/{id}")
-    public ResponseEntity<?> buscarTimePorId(
+    public ResponseEntity<?> findTeamById(
             @Parameter(description = "ID do time no Cartola", example = "398396")
             @PathVariable("id") String id) {
         try {
-            TimePorIdDTO time = timesService.buscarTimePorId(id);
-            if (time == null) {
+            TeamByIdDTO team = teamsService.findTeamById(id);
+            if (team == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Time não encontrado para o ID: " + id);
             }
-            return ResponseEntity.ok(time);
+            return ResponseEntity.ok(team);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao consultar API do Cartola: " + e.getMessage());
@@ -71,18 +71,18 @@ public class TimesController {
             @ApiResponse(responseCode = "500", description = "Erro ao consultar a API do Cartola")
     })
     @GetMapping("/time/id/{id}/{rodada}")
-    public ResponseEntity<?> buscarTimePorIdNaRodada(
+    public ResponseEntity<?> findTeamByIdInRound(
             @Parameter(description = "ID do time no Cartola", example = "398396")
             @PathVariable("id") String id,
             @Parameter(description = "Número da rodada", example = "2")
-            @PathVariable("rodada") int rodada) {
+            @PathVariable("rodada") int round) {
         try {
-            TimePorIdDTO time = timesService.buscarTimePorIdNaRodada(id, rodada);
-            if (time == null) {
+            TeamByIdDTO team = teamsService.findTeamByIdInRound(id, round);
+            if (team == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Time não encontrado para o ID: " + id + " e rodada: " + rodada);
+                        .body("Time não encontrado para o ID: " + id + " e rodada: " + round);
             }
-            return ResponseEntity.ok(time);
+            return ResponseEntity.ok(team);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao consultar API do Cartola: " + e.getMessage());
@@ -90,4 +90,3 @@ public class TimesController {
     }
 
 }
-

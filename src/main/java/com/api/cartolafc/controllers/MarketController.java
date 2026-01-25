@@ -1,7 +1,6 @@
 package com.api.cartolafc.controllers;
 
-import com.api.cartolafc.dtos.ClubesDTO;
-import com.api.cartolafc.services.ClubesService;
+import com.api.cartolafc.services.MarketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -11,30 +10,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-
 @RestController
-@RequestMapping("/clubes")
-public class ClubesController {
+@RequestMapping("/mercado")
+public class MarketController {
 
-    private final ClubesService clubesService;
+    private final MarketService marketService;
 
-    public ClubesController(ClubesService clubesService) {
-        this.clubesService = clubesService;
+    public MarketController(MarketService marketService) {
+        this.marketService = marketService;
     }
 
-    @Operation(summary = "Buscar informações dos clubes", description = "Retorna todos os clubes presentes no Cartola FC.")
+    @Operation(summary = "Buscar informações do mercado", description = "Retorna o Status atual do mercado (aberto/fechado, rodada atual etc.)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Clubes encontrados"),
-            @ApiResponse(responseCode = "404", description = "Clubes não encontrados"),
+            @ApiResponse(responseCode = "200", description = "Informações do mercado encontradas"),
+            @ApiResponse(responseCode = "404", description = "Mercado não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno")
     })
-    @GetMapping
-    public ResponseEntity<?> buscarClubes() {
+    @GetMapping("/status")
+    public ResponseEntity<?> findMarketInfo() {
         try {
-            Map<Integer, ClubesDTO> clubes = clubesService.buscarClubes();
-            return ResponseEntity.ok(clubes);
+            return ResponseEntity.ok(marketService.findMarketInfo());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao consultar API do Cartola: " + e.getMessage());
