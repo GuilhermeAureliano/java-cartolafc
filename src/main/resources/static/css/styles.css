@@ -32,7 +32,6 @@ body {
     padding: 2rem 1.5rem;
 }
 
-/* Header */
 .header {
     text-align: center;
     margin-bottom: 2rem;
@@ -55,7 +54,6 @@ body {
     font-size: 0.95rem;
 }
 
-/* Controls */
 .controls {
     display: flex;
     align-items: center;
@@ -93,7 +91,6 @@ body {
     color: var(--text-muted);
 }
 
-/* Loading */
 .loading {
     display: flex;
     flex-direction: column;
@@ -104,7 +101,10 @@ body {
     color: var(--text-muted);
 }
 
-/* Table */
+.loading[hidden] {
+    display: none !important;
+}
+
 .table-wrapper {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -176,7 +176,6 @@ body {
     font-style: italic;
 }
 
-/* Error */
 .erro {
     padding: 1rem 1.25rem;
     background: rgba(244, 33, 46, 0.12);

@@ -1,4 +1,3 @@
-const API_BASE = '';
 const CSV_URL = 'data/times.csv';
 
 const elements = {
@@ -16,7 +15,14 @@ function setStatus(text) {
 }
 
 function showLoading(show) {
-    elements.loading.hidden = !show;
+    const el = elements.loading;
+    if (show) {
+        el.style.display = 'flex';
+        el.removeAttribute('hidden');
+    } else {
+        el.style.display = 'none';
+        el.hidden = true;
+    }
 }
 
 function showTable(show) {
@@ -26,72 +32,6 @@ function showTable(show) {
 function showError(show, msg) {
     elements.error.hidden = !show;
     if (msg) elements.errorMessage.textContent = msg;
-}
-
-function parseTeamsCsv(text) {
-    return text
-        .split(/\r?\n/)
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-}
-
-// Fetch genérico com timeout via AbortController
-async function fetchWithTimeout(url, timeoutMs = 10000) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        return response;
-    } catch {
-        clearTimeout(timeoutId);
-        return null;
-    }
-}
-
-async function fetchJson(url, timeoutMs = 10000) {
-    try {
-        const response = await fetchWithTimeout(url, timeoutMs);
-        if (!response || !response.ok) return null;
-        return await response.json();
-    } catch {
-        return null;
-    }
-}
-
-async function fetchText(url, timeoutMs = 10000) {
-    try {
-        const response = await fetchWithTimeout(url, timeoutMs);
-        if (!response || !response.ok) return null;
-        return await response.text();
-    } catch {
-        return null;
-    }
-}
-
-function fetchTeamById(id) {
-    if (!id) return Promise.resolve(null);
-    return fetchJson(`${API_BASE}/time/id/${encodeURIComponent(id)}`);
-}
-
-function fetchTeamByName(name) {
-    return fetchJson(`${API_BASE}/times?q=${encodeURIComponent(name)}`);
-}
-
-function formatNumber(obj, camelKey, snakeKey) {
-    if (obj == null) return '—';
-    const value = obj[camelKey] ?? obj[snakeKey];
-    if (value == null) return '—';
-    const num = Number(value);
-    return Number.isNaN(num) ? '—' : String(num);
-}
-
-function escapeHtml(str) {
-    if (str == null) return '—';
-    const div = document.createElement('div');
-    div.textContent = String(str);
-    return div.innerHTML;
 }
 
 function createTableRow(originalName, teamDto, details) {
@@ -144,10 +84,8 @@ async function loadTeams() {
 
         setStatus(`Carregando ${names.length} times...`);
 
-        // Busca paralela por nome
         const teamResults = await Promise.all(names.map(name => fetchTeamByName(name)));
 
-        // Busca paralela por ID para obter detalhes
         const detailResults = await Promise.all(
             teamResults.map(team => {
                 const teamId = team?.time_id ?? team?.timeId;
@@ -155,7 +93,6 @@ async function loadTeams() {
             })
         );
 
-        // Monta as linhas da tabela
         names.forEach((name, index) => {
             const tr = createTableRow(name, teamResults[index], detailResults[index]);
             elements.tableBody.appendChild(tr);
@@ -167,6 +104,7 @@ async function loadTeams() {
         } else {
             setStatus(`${names.length} times (${foundCount} encontrados via API).`);
         }
+        showLoading(false);
         showTable(true);
     } catch (e) {
         showError(true, e.message || 'Erro ao carregar os times.');
