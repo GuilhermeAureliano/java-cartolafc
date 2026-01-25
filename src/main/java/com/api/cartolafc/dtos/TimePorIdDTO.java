@@ -15,4 +15,12 @@ public record TimePorIdDTO(
         @JsonProperty("rodada_atual") Integer rodadaAtual,
         @JsonProperty("patrimonio") Double patrimonio,
         @JsonProperty("valor_time") Double valorTime
-) {}
+) {
+    private static final Double PATRIMONIO_INICIAL = 100.0;
+
+    public TimePorIdDTO {
+        pontosCampeonato = pontosCampeonato != null ? pontosCampeonato : 0.0;
+        pontos = pontos != null ? pontos : 0.0;
+        patrimonio = patrimonio != null ? patrimonio : PATRIMONIO_INICIAL;
+    }
+}
