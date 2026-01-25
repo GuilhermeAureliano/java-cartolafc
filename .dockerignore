@@ -1,0 +1,45 @@
+# Controle de versão
+.git
+.gitignore
+.gitattributes
+
+# IDEs e editores
+.idea
+.vscode
+*.iml
+*.swp
+*.swo
+
+# Arquivos de build (já compilados localmente)
+target
+build
+*.class
+*.jar
+
+# Arquivos temporários e logs
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Dependências de frontend (se houver)
+node_modules
+
+# Arquivos Docker (não precisam ir para o contexto)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentação (não necessária na imagem)
+README.md
+LICENSE
+docs
+
+# Arquivos de ambiente (segurança - nunca incluir na imagem)
+.env
+.env.*
+*.env
+
+# Testes e configurações locais
+src/test
+*.test.js

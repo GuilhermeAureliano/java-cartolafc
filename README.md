@@ -19,6 +19,21 @@ Uma interface em Java para consumir a API REST do Cartola FC, facilitando a inte
 
 Em breve: instruções de instalação e exemplos de uso.
 
+## Executar com Docker
+
+### Build e execução (Docker)
+
+```bash
+docker build -t cartolafc .
+docker run --rm -p 8080:8080 cartolafc
+```
+
+### Build e execução (Docker Compose)
+
+```bash
+docker compose up --build
+```
+
 ## Autor
 
 [Guilherme Aureliano](https://github.com/guilhermeaureliano)
