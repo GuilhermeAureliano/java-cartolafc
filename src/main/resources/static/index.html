@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Times — CartolaFC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Times CartolaFC</h1>
+            <p class="subtitle">Dados dos times a partir do arquivo times.csv</p>
+        </header>
+
+        <div class="controls">
+            <button type="button" id="btnCarregar" class="btn btn-primary">Carregar times</button>
+            <span id="status" class="status"></span>
+        </div>
+
+        <div id="loading" class="loading" hidden>
+            <p>Buscando dados dos times...</p>
+        </div>
+
+        <div id="tabelaWrapper" class="table-wrapper" hidden>
+            <table class="tabela-times" id="tabelaTimes">
+                <thead>
+                    <tr>
+                        <th>Escudo</th>
+                        <th>Nome</th>
+                        <th>Cartoleiro</th>
+                        <th>Pontos Campeonato</th>
+                        <th>Patrimônio</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabela">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="erro" class="erro" hidden>
+            <p id="mensagemErro"></p>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>
