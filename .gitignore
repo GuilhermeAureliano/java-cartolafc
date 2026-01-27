@@ -34,3 +34,6 @@ build/
 
 ### Dados locais ###
 src/main/resources/static/data/times.csv
+
+### Cursor ###
+.cursor/
