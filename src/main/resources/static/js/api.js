@@ -42,3 +42,8 @@ function fetchTeamById(id) {
 function fetchTeamByName(name) {
     return fetchJson(`${API_BASE}/times?q=${encodeURIComponent(name)}`);
 }
+
+function fetchMonthlyPoints(id) {
+    if (!id) return Promise.resolve(null);
+    return fetchJson(`${API_BASE}/time/id/${encodeURIComponent(id)}/pontos-mensais`);
+}

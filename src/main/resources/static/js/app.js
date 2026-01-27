@@ -128,13 +128,13 @@ function createTableRow(team) {
         tr.innerHTML = `
             <td class="col-escudo"><div class="escudo-placeholder">—</div></td>
             <td>${escapeHtml(team.originalName)}</td>
-            <td colspan="3" class="not-found-cell">Não encontrado na API</td>
+            <td colspan="4" class="not-found-cell">Não encontrado na API</td>
         `;
         tr.dataset.valid = 'false';
         return tr;
     }
 
-    const { teamDto, details } = team;
+    const { teamDto, details, monthlyPoints } = team;
 
     const shieldHtml = teamDto.url_escudo_png
         ? `<img class="escudo" src="${escapeHtml(teamDto.url_escudo_png)}" alt="Escudo de ${escapeHtml(teamDto.nome)}" loading="lazy" onerror="this.outerHTML='<div class=\\'escudo-placeholder\\'>—</div>'">`
@@ -143,13 +143,15 @@ function createTableRow(team) {
     const points = formatNumber(details, 'pontosCampeonato', 'pontos_campeonato');
     const patrimony = formatNumber(details, 'patrimonio', 'patrimonio');
     const cartoleiro = teamDto.nome_cartola || teamDto.nomeCartola || '—';
+    const monthlyPointsValue = monthlyPoints?.pontos_mensais || 0;
 
     tr.innerHTML = `
         <td class="col-escudo">${shieldHtml}</td>
         <td class="team-name">${escapeHtml(teamDto.nome || team.originalName)}</td>
         <td class="cartoleiro-name">${escapeHtml(cartoleiro)}</td>
-        <td class="col-pontos value-cell">${escapeHtml(points)}</td>
-        <td class="col-patrimonio value-cell">${escapeHtml(patrimony)}</td>
+        <td class="col-pontos value-cell">${points}</td>
+        <td class="col-patrimonio value-cell">${patrimony}</td>
+        <td class="col-pontos-mensais value-cell">${monthlyPointsValue}</td>
     `;
     
     tr.dataset.valid = 'true';
@@ -157,6 +159,7 @@ function createTableRow(team) {
     tr.dataset.cartoleiro = normalizeText(cartoleiro);
     tr.dataset.pontos = extractNumber(details, 'pontosCampeonato', 'pontos_campeonato');
     tr.dataset.patrimonio = extractNumber(details, 'patrimonio', 'patrimonio');
+    tr.dataset.pontosMensais = monthlyPointsValue || 0;
 
     return tr;
 }
@@ -240,6 +243,10 @@ function sortTeams(column, toggleDirection = true) {
             case 'patrimonio':
                 valueA = extractNumber(a.details, 'patrimonio', 'patrimonio');
                 valueB = extractNumber(b.details, 'patrimonio', 'patrimonio');
+                break;
+            case 'pontosMensais':
+                valueA = a.monthlyPoints?.pontos_mensais ?? 0;
+                valueB = b.monthlyPoints?.pontos_mensais ?? 0;
                 break;
             default:
                 return 0;
@@ -331,17 +338,28 @@ async function loadTeams() {
                 return teamId ? fetchTeamById(teamId) : Promise.resolve(null);
             })
         );
-        setProgress(80);
+        setProgress(65);
+
+        setStatus('Carregando pontos mensais...');
+        const monthlyPointsResults = await Promise.all(
+            teamResults.map(team => {
+                const teamId = team?.time_id ?? team?.timeId;
+                return teamId ? fetchMonthlyPoints(teamId) : Promise.resolve(null);
+            })
+        );
+        setProgress(85);
 
         state.teams = names.map((name, index) => {
             const teamDto = teamResults[index];
             const details = detailResults[index];
+            const monthlyPoints = monthlyPointsResults[index];
             const isValid = teamDto && typeof teamDto === 'object' && !Array.isArray(teamDto);
             
             return {
                 originalName: name,
                 teamDto: isValid ? teamDto : null,
                 details: isValid ? details : null,
+                monthlyPoints: isValid ? monthlyPoints : null,
                 isValid
             };
         });
