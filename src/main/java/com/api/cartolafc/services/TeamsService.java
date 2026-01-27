@@ -7,7 +7,6 @@ import com.api.cartolafc.utils.Utils;
 import static com.api.cartolafc.utils.Utils.BASE_URL;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -17,6 +16,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamsService {
@@ -125,60 +128,51 @@ public class TeamsService {
             int currentMonth = now.getMonthValue();
             int currentYear = now.getYear();
             
-            double totalPoints = 0.0;
+            List<RoundDTO> currentMonthRounds = allRounds.stream()
+                    .filter(round -> {
+                        try {
+                            LocalDateTime startDate = LocalDateTime.parse(round.start(), DATE_TIME_FORMATTER);
+                            LocalDate startLocalDate = startDate.toLocalDate();
+                            return startLocalDate.getMonthValue() == currentMonth 
+                                    && startLocalDate.getYear() == currentYear;
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .collect(Collectors.toList());
             
-            for (RoundDTO round : allRounds) {
-                try {
-                    LocalDateTime startDate = LocalDateTime.parse(round.start(), DATE_TIME_FORMATTER);
-                    LocalDate startLocalDate = startDate.toLocalDate();
-                    
-                    int roundMonth = startLocalDate.getMonthValue();
-                    int roundYear = startLocalDate.getYear();
-                    
-                    // Rodada de mês anterior ao atual - pula para a próxima
-                    if (roundYear < currentYear || 
-                        (roundYear == currentYear && roundMonth < currentMonth)) {
-                        continue;
-                    }
-                    
-                    // Rodada de mês posterior ao atual - interrompe o loop
-                    if (roundYear > currentYear || 
-                        (roundYear == currentYear && roundMonth > currentMonth)) {
-                        break;
-                    }
-                    
-                    // Rodada do mês atual - processa
-                    TeamByIdDTO teamInRound = findTeamByIdInRoundSafely(id, round.roundId());
-                    if (teamInRound.points() != null) {
-                        totalPoints += teamInRound.points();
-                    }
-                } catch (RoundNotAvailableException e) {
-                    // Rodada não disponível, interrompe o loop pois as próximas também não estarão
-                    break;
-                } catch (Exception e) {
-                    continue;
-                }
+            if (currentMonthRounds.isEmpty()) {
+                return 0.0;
             }
+
+            ExecutorService executor = Executors.newFixedThreadPool(
+                    Math.min(currentMonthRounds.size(), 4)
+            );
             
-            return totalPoints;
+            try {
+                List<CompletableFuture<Double>> futures = currentMonthRounds.stream()
+                        .map(round -> CompletableFuture.supplyAsync(() -> {
+                            try {
+                                TeamByIdDTO teamInRound = findTeamByIdInRound(id, round.roundId());
+                                return teamInRound.points() != null ? teamInRound.points() : 0.0;
+                            } catch (HttpClientErrorException e) {
+                                return 0.0;
+                            } catch (Exception e) {
+                                return 0.0;
+                            }
+                        }, executor))
+                        .collect(Collectors.toList());
+                
+                return futures.stream()
+                        .map(CompletableFuture::join)
+                        .mapToDouble(Double::doubleValue)
+                        .sum();
+            } finally {
+                executor.shutdown();
+            }
         } catch (Exception e) {
             return 0.0;
         }
     }
 
-    private TeamByIdDTO findTeamByIdInRoundSafely(String id, int round) throws RoundNotAvailableException {
-        try {
-            return findTeamByIdInRound(id, round);
-        } catch (HttpClientErrorException e) {                          
-            if (e.getStatusCode().is4xxClientError()) {
-                throw new RoundNotAvailableException();
-            }
-            throw new RoundNotAvailableException();
-        } catch (Exception e) {
-            throw new RoundNotAvailableException();
-        }
-    }
-
-    private static class RoundNotAvailableException extends Exception {
-    }
 }
