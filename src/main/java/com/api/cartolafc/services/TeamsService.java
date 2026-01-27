@@ -2,22 +2,33 @@ package com.api.cartolafc.services;
 
 import com.api.cartolafc.dtos.TeamDTO;
 import com.api.cartolafc.dtos.TeamByIdDTO;
+import com.api.cartolafc.dtos.RoundDTO;
 import com.api.cartolafc.utils.Utils;
 import static com.api.cartolafc.utils.Utils.BASE_URL;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class TeamsService {
 
-    private final RestTemplate restTemplate;
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public TeamsService(RestTemplate restTemplate) {
+    private final RestTemplate restTemplate;
+    private final RoundsService roundsService;
+
+    public TeamsService(RestTemplate restTemplate, RoundsService roundsService) {
         this.restTemplate = restTemplate;
+        this.roundsService = roundsService;
     }
 
     public TeamDTO findTeamByName(String name) {
@@ -105,5 +116,69 @@ public class TeamsService {
         }
 
         return body;
+    }
+
+    public Double calculateMonthlyPoints(String id) {
+        try {
+            List<RoundDTO> allRounds = roundsService.findRounds();
+            LocalDate now = LocalDate.now();
+            int currentMonth = now.getMonthValue();
+            int currentYear = now.getYear();
+            
+            double totalPoints = 0.0;
+            
+            for (RoundDTO round : allRounds) {
+                try {
+                    LocalDateTime startDate = LocalDateTime.parse(round.start(), DATE_TIME_FORMATTER);
+                    LocalDate startLocalDate = startDate.toLocalDate();
+                    
+                    int roundMonth = startLocalDate.getMonthValue();
+                    int roundYear = startLocalDate.getYear();
+                    
+                    // Rodada de mês anterior ao atual - pula para a próxima
+                    if (roundYear < currentYear || 
+                        (roundYear == currentYear && roundMonth < currentMonth)) {
+                        continue;
+                    }
+                    
+                    // Rodada de mês posterior ao atual - interrompe o loop
+                    if (roundYear > currentYear || 
+                        (roundYear == currentYear && roundMonth > currentMonth)) {
+                        break;
+                    }
+                    
+                    // Rodada do mês atual - processa
+                    TeamByIdDTO teamInRound = findTeamByIdInRoundSafely(id, round.roundId());
+                    if (teamInRound.points() != null) {
+                        totalPoints += teamInRound.points();
+                    }
+                } catch (RoundNotAvailableException e) {
+                    // Rodada não disponível, interrompe o loop pois as próximas também não estarão
+                    break;
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+            
+            return totalPoints;
+        } catch (Exception e) {
+            return 0.0;
+        }
+    }
+
+    private TeamByIdDTO findTeamByIdInRoundSafely(String id, int round) throws RoundNotAvailableException {
+        try {
+            return findTeamByIdInRound(id, round);
+        } catch (HttpClientErrorException e) {                          
+            if (e.getStatusCode().is4xxClientError()) {
+                throw new RoundNotAvailableException();
+            }
+            throw new RoundNotAvailableException();
+        } catch (Exception e) {
+            throw new RoundNotAvailableException();
+        }
+    }
+
+    private static class RoundNotAvailableException extends Exception {
     }
 }

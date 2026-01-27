@@ -2,6 +2,7 @@ package com.api.cartolafc.controllers;
 
 import com.api.cartolafc.dtos.TeamDTO;
 import com.api.cartolafc.dtos.TeamByIdDTO;
+import com.api.cartolafc.dtos.MonthlyPointsDTO;
 import com.api.cartolafc.services.TeamsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -86,6 +87,35 @@ public class TeamsController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao consultar API do Cartola: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Buscar pontos mensais do time", description = "Calcula e retorna a soma de pontos do time no mês atual, somando os pontos de todas as rodadas do mês.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pontos mensais calculados com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID do time inválido"),
+            @ApiResponse(responseCode = "500", description = "Erro ao consultar a API do Cartola")
+    })
+    @GetMapping("/time/id/{id}/pontos-mensais")
+    public ResponseEntity<?> findMonthlyPoints(
+            @Parameter(description = "ID do time no Cartola", example = "398396")
+            @PathVariable("id") String id) {
+        if (id == null || id.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("ID do time é obrigatório");
+        }
+        if (!id.matches("\\d+")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("ID do time deve ser numérico");
+        }
+        
+        try {
+            Double monthlyPoints = teamsService.calculateMonthlyPoints(id);
+            MonthlyPointsDTO monthlyPointsDTO = new MonthlyPointsDTO(monthlyPoints);
+            return ResponseEntity.ok(monthlyPointsDTO);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao calcular pontos mensais: " + e.getMessage());
         }
     }
 
