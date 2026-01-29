@@ -3,6 +3,9 @@ package com.api.cartolafc.dtos;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
+import java.util.List;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record TeamByIdDTO(
         @JsonProperty("time") TeamDTO team,
@@ -14,7 +17,8 @@ public record TeamByIdDTO(
         @JsonProperty("esquema_id") Integer formationId,
         @JsonProperty("rodada_atual") Integer currentRound,
         @JsonProperty("patrimonio") Double assets,
-        @JsonProperty("valor_time") Double teamValue
+        @JsonProperty("valor_time") Double teamValue,
+        @JsonProperty("atletas") List<AthleteDTO> athletes
 ) {
     private static final Double INITIAL_ASSETS = 100.0;
 
@@ -22,5 +26,6 @@ public record TeamByIdDTO(
         championshipPoints = championshipPoints != null ? championshipPoints : 0.0;
         points = points != null ? points : 0.0;
         assets = assets != null ? assets : INITIAL_ASSETS;
+        athletes = athletes != null ? athletes : Collections.emptyList();
     }
 }

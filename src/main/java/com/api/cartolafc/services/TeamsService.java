@@ -114,7 +114,8 @@ public class TeamsService {
                     body.formationId(),
                     body.currentRound(),
                     body.assets(),
-                    body.teamValue()
+                    body.teamValue(),
+                    body.athletes()
             );
         }
 
