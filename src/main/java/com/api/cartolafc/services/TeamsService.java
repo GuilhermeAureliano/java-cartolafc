@@ -31,6 +31,9 @@ public class TeamsService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    /** Multiplicador de pontuação do capitão - regra do Cartola em que a pontuação do capitão vale 1.5x. */
+    private static final double CAPTAIN_SCORE_MULTIPLIER = 1.5;
+
     private final RestTemplate restTemplate;
     private final RoundsService roundsService;
     private final AthletesService athletesService;
@@ -210,7 +213,7 @@ public class TeamsService {
         double parcial = athleteIds.stream()
                 .mapToDouble(athleteId -> {
                     double score = scoreByAthleteId.getOrDefault(athleteId, 0.0);
-                    return athleteId.equals(captainId) ? score * 1.5 : score;
+                    return athleteId.equals(captainId) ? score * CAPTAIN_SCORE_MULTIPLIER : score;
                 })
                 .sum();
 
