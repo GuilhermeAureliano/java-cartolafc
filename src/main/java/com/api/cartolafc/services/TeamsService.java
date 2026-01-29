@@ -1,8 +1,10 @@
 package com.api.cartolafc.services;
 
-import com.api.cartolafc.dtos.TeamDTO;
+import com.api.cartolafc.dtos.AthleteDTO;
 import com.api.cartolafc.dtos.TeamByIdDTO;
+import com.api.cartolafc.dtos.TeamDTO;
 import com.api.cartolafc.dtos.RoundDTO;
+import com.api.cartolafc.dtos.ScoredAthletesOutputDTO;
 import com.api.cartolafc.utils.Utils;
 import static com.api.cartolafc.utils.Utils.BASE_URL;
 import org.springframework.core.ParameterizedTypeReference;
@@ -12,14 +14,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 @Service
 public class TeamsService {
@@ -28,10 +33,12 @@ public class TeamsService {
 
     private final RestTemplate restTemplate;
     private final RoundsService roundsService;
+    private final AthletesService athletesService;
 
-    public TeamsService(RestTemplate restTemplate, RoundsService roundsService) {
+    public TeamsService(RestTemplate restTemplate, RoundsService roundsService, AthletesService athletesService) {
         this.restTemplate = restTemplate;
         this.roundsService = roundsService;
+        this.athletesService = athletesService;
     }
 
     public TeamDTO findTeamByName(String name) {
@@ -174,6 +181,35 @@ public class TeamsService {
         } catch (Exception e) {
             return 0.0;
         }
+    }
+
+    public Optional<Double> calculatePartialScore(String id, int round) {
+        TeamByIdDTO team;
+        try {
+            team = findTeamByIdInRound(id, round);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() != null && e.getStatusCode().value() == 404) {
+                return Optional.empty();
+            }
+            throw e;
+        }
+
+        List<Integer> athleteIds = Optional.ofNullable(team.athletes())
+                .orElse(List.of())
+                .stream()
+                .map(AthleteDTO::athleteId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        ScoredAthletesOutputDTO scoredAthletes = athletesService.findScoredAthletes();
+        Map<Integer, Double> scoreByAthleteId = scoredAthletes.atletas().stream()
+                .collect(Collectors.toMap(ScoredAthletesOutputDTO.AthleteScore::athleteId, ScoredAthletesOutputDTO.AthleteScore::pontuacao, (a, b) -> a));
+
+        double parcial = athleteIds.stream()
+                .mapToDouble(athleteId -> scoreByAthleteId.getOrDefault(athleteId, 0.0))
+                .sum();
+
+        return Optional.of(parcial);
     }
 
 }

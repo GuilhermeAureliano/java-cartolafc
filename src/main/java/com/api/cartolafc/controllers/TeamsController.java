@@ -3,6 +3,7 @@ package com.api.cartolafc.controllers;
 import com.api.cartolafc.dtos.TeamDTO;
 import com.api.cartolafc.dtos.TeamByIdDTO;
 import com.api.cartolafc.dtos.MonthlyPointsDTO;
+import com.api.cartolafc.dtos.ParcialDTO;
 import com.api.cartolafc.services.TeamsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -59,6 +60,29 @@ public class TeamsController {
                         .body("Time não encontrado para o ID: " + id);
             }
             return ResponseEntity.ok(team);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao consultar API do Cartola: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Calcular pontuação parcial do time na rodada", description = "Calcula a soma das pontuações dos atletas do time na rodada informada, cruzando com os atletas pontuados.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pontuação parcial calculada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Time não encontrado para o ID e rodada informados"),
+            @ApiResponse(responseCode = "500", description = "Erro ao consultar API do Cartola")
+    })
+    @GetMapping("/time/id/{id}/{rodada}/parcial")
+    public ResponseEntity<?> findPartialScore(
+            @Parameter(description = "ID do time no Cartola", example = "398396")
+            @PathVariable("id") String id,
+            @Parameter(description = "Número da rodada", example = "2")
+            @PathVariable("rodada") int rodada) {
+        try {
+            return teamsService.calculatePartialScore(id, rodada)
+                    .map(parcial -> ResponseEntity.ok((Object) new ParcialDTO(parcial)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body("Time não encontrado para o ID: " + id + " e rodada: " + rodada));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao consultar API do Cartola: " + e.getMessage());
