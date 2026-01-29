@@ -201,15 +201,31 @@ public class TeamsService {
                 .filter(Objects::nonNull)
                 .toList();
 
+        Integer captainId = parseCaptainId(team.captainId());
+
         ScoredAthletesOutputDTO scoredAthletes = athletesService.findScoredAthletes();
         Map<Integer, Double> scoreByAthleteId = scoredAthletes.atletas().stream()
                 .collect(Collectors.toMap(ScoredAthletesOutputDTO.AthleteScore::athleteId, ScoredAthletesOutputDTO.AthleteScore::pontuacao, (a, b) -> a));
 
         double parcial = athleteIds.stream()
-                .mapToDouble(athleteId -> scoreByAthleteId.getOrDefault(athleteId, 0.0))
+                .mapToDouble(athleteId -> {
+                    double score = scoreByAthleteId.getOrDefault(athleteId, 0.0);
+                    return athleteId.equals(captainId) ? score * 1.5 : score;
+                })
                 .sum();
 
         return Optional.of(parcial);
+    }
+
+    private Integer parseCaptainId(String captainId) {
+        if (captainId == null || captainId.isBlank()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(captainId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
 }
