@@ -5,12 +5,27 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-function formatNumber(obj, camelKey, snakeKey) {
+function formatNumber(obj, camelKey, snakeKey, options = {}) {
     if (obj == null) return '—';
     const value = obj[camelKey] ?? obj[snakeKey];
     if (value == null) return '—';
     const num = Number(value);
-    return Number.isNaN(num) ? '—' : num.toLocaleString('pt-BR');
+    if (Number.isNaN(num)) return '—';
+
+    const { minimumFractionDigits, maximumFractionDigits } = options;
+    const formatOpts = {};
+    if (minimumFractionDigits != null) formatOpts.minimumFractionDigits = minimumFractionDigits;
+    if (maximumFractionDigits != null) formatOpts.maximumFractionDigits = maximumFractionDigits;
+
+    return num.toLocaleString('pt-BR', formatOpts);
+}
+
+function formatDecimal(num, decimals = 2) {
+    if (num == null || Number.isNaN(Number(num))) return '—';
+    return Number(num).toLocaleString('pt-BR', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
 }
 
 function extractNumber(obj, camelKey, snakeKey) {

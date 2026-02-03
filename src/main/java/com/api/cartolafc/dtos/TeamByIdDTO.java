@@ -3,6 +3,8 @@ package com.api.cartolafc.dtos;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import com.api.cartolafc.utils.Utils;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -23,8 +25,8 @@ public record TeamByIdDTO(
     private static final Double INITIAL_ASSETS = 100.0;
 
     public TeamByIdDTO {
-        championshipPoints = championshipPoints != null ? championshipPoints : 0.0;
-        points = points != null ? points : 0.0;
+        championshipPoints = Utils.round(championshipPoints, 2);
+        points = Utils.round(points, 2);
         assets = assets != null ? assets : INITIAL_ASSETS;
         athletes = athletes != null ? athletes : Collections.emptyList();
     }

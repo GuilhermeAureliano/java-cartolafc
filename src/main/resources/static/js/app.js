@@ -140,10 +140,11 @@ function createTableRow(team) {
         ? `<img class="escudo" src="${escapeHtml(teamDto.url_escudo_png)}" alt="Escudo de ${escapeHtml(teamDto.nome)}" loading="lazy" onerror="this.outerHTML='<div class=\\'escudo-placeholder\\'>—</div>'">`
         : '<div class="escudo-placeholder">—</div>';
 
-    const points = formatNumber(details, 'pontosCampeonato', 'pontos_campeonato');
+    const pointsRaw = extractNumber(details, 'pontosCampeonato', 'pontos_campeonato');
+    const points = formatDecimal(pointsRaw, 2);
     const patrimony = formatNumber(details, 'patrimonio', 'patrimonio');
     const cartoleiro = teamDto.nome_cartola || teamDto.nomeCartola || '—';
-    const monthlyPointsValue = monthlyPoints?.pontos_mensais || 0;
+    const monthlyPointsValue = formatDecimal(monthlyPoints?.pontos_mensais ?? 0, 2);
 
     tr.innerHTML = `
         <td class="col-escudo">${shieldHtml}</td>
@@ -159,7 +160,7 @@ function createTableRow(team) {
     tr.dataset.cartoleiro = normalizeText(cartoleiro);
     tr.dataset.pontos = extractNumber(details, 'pontosCampeonato', 'pontos_campeonato');
     tr.dataset.patrimonio = extractNumber(details, 'patrimonio', 'patrimonio');
-    tr.dataset.pontosMensais = monthlyPointsValue || 0;
+    tr.dataset.pontosMensais = monthlyPoints?.pontos_mensais ?? 0;
 
     return tr;
 }
