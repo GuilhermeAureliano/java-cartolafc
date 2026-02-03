@@ -28,12 +28,44 @@ function formatDecimal(num, decimals = 2) {
     });
 }
 
-function extractNumber(obj, camelKey, snakeKey) {
+function extractNumber(obj, camelKey, snakeKey, extraKeys = []) {
     if (obj == null) return 0;
-    const value = obj[camelKey] ?? obj[snakeKey];
+    const keys = Array.isArray(extraKeys) ? extraKeys : [];
+    const value = obj[camelKey] ?? obj[snakeKey] ?? keys.map(k => obj[k]).find(v => v != null);
     if (value == null) return 0;
+    const num = parseNumeric(value);
+    return num;
+}
+
+function parseNumeric(value) {
+    if (value == null) return 0;
+    if (typeof value === 'number') return Number.isNaN(value) ? 0 : value;
+    const str = String(value).trim().replace(/\s/g, '');
+    if (str === '') return 0;
     const num = Number(value);
-    return Number.isNaN(num) ? 0 : num;
+    if (!Number.isNaN(num)) return num;
+    const normalized = str.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function compareForSort(valueA, valueB, direction) {
+    const isAsc = direction === 'asc';
+    const aMissing = valueA == null || (typeof valueA === 'number' && Number.isNaN(valueA));
+    const bMissing = valueB == null || (typeof valueB === 'number' && Number.isNaN(valueB));
+    if (aMissing && bMissing) return 0;
+    if (aMissing) return isAsc ? 1 : -1;
+    if (bMissing) return isAsc ? -1 : 1;
+    const isString = typeof valueA === 'string' && typeof valueB === 'string';
+    let comparison;
+    if (isString) {
+        comparison = (valueA || '').localeCompare(valueB || '', 'pt-BR');
+    } else {
+        const numA = typeof valueA === 'number' ? valueA : parseNumeric(valueA);
+        const numB = typeof valueB === 'number' ? valueB : parseNumeric(valueB);
+        comparison = numA - numB;
+    }
+    return isAsc ? comparison : -comparison;
 }
 
 function formatCompactNumber(num) {

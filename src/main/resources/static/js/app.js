@@ -1,4 +1,5 @@
 const CSV_URL = 'data/times.csv';
+const PATRIMONY_EXTRA_KEYS = ['assets'];
 
 const state = {
     teams: [],           // Dados completos dos times
@@ -82,7 +83,7 @@ function updateStats() {
     
     validTeams.forEach(team => {
         const points = extractNumber(team.details, 'pontosCampeonato', 'pontos_campeonato');
-        const patrimony = extractNumber(team.details, 'patrimonio', 'patrimonio');
+        const patrimony = extractNumber(team.details, 'patrimonio', 'patrimonio', PATRIMONY_EXTRA_KEYS);
         
         totalPoints += points;
         if (points > maxPoints) maxPoints = points;
@@ -142,7 +143,9 @@ function createTableRow(team) {
 
     const pointsRaw = extractNumber(details, 'pontosCampeonato', 'pontos_campeonato');
     const points = formatDecimal(pointsRaw, 2);
-    const patrimony = formatNumber(details, 'patrimonio', 'patrimonio');
+    const patrimonyNum = extractNumber(details, 'patrimonio', 'patrimonio', PATRIMONY_EXTRA_KEYS);
+    const hasPatrimony = details?.patrimonio != null || details?.assets != null;
+    const patrimony = hasPatrimony ? patrimonyNum.toLocaleString('pt-BR') : '—';
     const cartoleiro = teamDto.nome_cartola || teamDto.nomeCartola || '—';
     const monthlyPointsValue = formatDecimal(monthlyPoints?.pontos_mensais ?? 0, 2);
 
@@ -159,7 +162,7 @@ function createTableRow(team) {
     tr.dataset.nome = normalizeText(teamDto.nome || team.originalName);
     tr.dataset.cartoleiro = normalizeText(cartoleiro);
     tr.dataset.pontos = extractNumber(details, 'pontosCampeonato', 'pontos_campeonato');
-    tr.dataset.patrimonio = extractNumber(details, 'patrimonio', 'patrimonio');
+    tr.dataset.patrimonio = extractNumber(details, 'patrimonio', 'patrimonio', PATRIMONY_EXTRA_KEYS);
     tr.dataset.pontosMensais = monthlyPoints?.pontos_mensais ?? 0;
 
     return tr;
@@ -242,8 +245,8 @@ function sortTeams(column, toggleDirection = true) {
                 valueB = extractNumber(b.details, 'pontosCampeonato', 'pontos_campeonato');
                 break;
             case 'patrimonio':
-                valueA = extractNumber(a.details, 'patrimonio', 'patrimonio');
-                valueB = extractNumber(b.details, 'patrimonio', 'patrimonio');
+                valueA = extractNumber(a.details, 'patrimonio', 'patrimonio', PATRIMONY_EXTRA_KEYS);
+                valueB = extractNumber(b.details, 'patrimonio', 'patrimonio', PATRIMONY_EXTRA_KEYS);
                 break;
             case 'pontosMensais':
                 valueA = a.monthlyPoints?.pontos_mensais ?? 0;
@@ -256,14 +259,7 @@ function sortTeams(column, toggleDirection = true) {
         if (!a.isValid) return 1;
         if (!b.isValid) return -1;
         
-        let comparison = 0;
-        if (typeof valueA === 'string') {
-            comparison = valueA.localeCompare(valueB, 'pt-BR');
-        } else {
-            comparison = valueA - valueB;
-        }
-        
-        return state.sortDirection === 'asc' ? comparison : -comparison;
+        return compareForSort(valueA, valueB, state.sortDirection);
     });
     
     renderTable();
